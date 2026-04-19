@@ -637,7 +637,7 @@ function laneResizeEdge(p,cx,cy){
 }
 
 // ── PORTS ─────────────────────────────────────────────────────────
-function ports(e){return[{x:e.x,y:e.y-e.h/2},{x:e.x+e.w/2,y:e.y},{x:e.x,y:e.y+e.h/2},{x:e.x-e.w/2,y:e.y}];}
+function ports(e){return[{x:e.x,y:e.y-e.h/2,dir:'top'},{x:e.x+e.w/2,y:e.y,dir:'right'},{x:e.x,y:e.y+e.h/2,dir:'bottom'},{x:e.x-e.w/2,y:e.y,dir:'left'}];}
 function nearPort(e,tx,ty){let b=null,bd=Infinity;for(const p of ports(e)){const d=Math.hypot(p.x-tx,p.y-ty);if(d<bd){bd=d;b=p;}}return b;}
 function portAt(e,wx,wy){for(const p of ports(e))if(Math.hypot(wx-p.x,wy-p.y)<10/zoom)return p;return null;}
 
@@ -652,16 +652,29 @@ const PCOL=[
 
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.save();ctx.translate(pan.x,pan.y);ctx.scale(zoom,zoom);
-  // draw paper sheet
+
+  // draw paper shadow BEFORE the zoom transform (so shadow doesn't scale up)
   if(pageFormat!=='none'){
     const fmt=PAGE_FORMATS[pageFormat];
-    const sx=0,sy=0,sw=fmt.w,sh=fmt.h;
-    // shadow
-    ctx.save();ctx.shadowColor='rgba(0,0,0,.18)';ctx.shadowBlur=18/zoom;ctx.shadowOffsetX=4/zoom;ctx.shadowOffsetY=4/zoom;
+    const sx=pan.x, sy=pan.y;
+    const sw=fmt.w*zoom, sh=fmt.h*zoom;
+    ctx.save();
+    ctx.shadowColor='rgba(0,0,0,.18)';
+    ctx.shadowBlur=16;
+    ctx.shadowOffsetX=3;
+    ctx.shadowOffsetY=3;
     ctx.fillStyle=isDark?'#F0EDE6':'#ffffff';
     ctx.fillRect(sx,sy,sw,sh);
     ctx.restore();
+  }
+
+  ctx.save();ctx.translate(pan.x,pan.y);ctx.scale(zoom,zoom);
+  // draw paper sheet face (no shadow here)
+  if(pageFormat!=='none'){
+    const fmt=PAGE_FORMATS[pageFormat];
+    const sx=0,sy=0,sw=fmt.w,sh=fmt.h;
+    ctx.fillStyle=isDark?'#F0EDE6':'#ffffff';
+    ctx.fillRect(sx,sy,sw,sh);
     // border
     ctx.strokeStyle=isDark?'#2e334d':'#D0CBC2';ctx.lineWidth=1/zoom;
     ctx.strokeRect(sx,sy,sw,sh);
@@ -669,7 +682,7 @@ function draw(){
     ctx.fillStyle=isDark?'#3a4060':'#D0CBC2';
     ctx.font=`${11/zoom}px 'DM Mono',monospace`;ctx.textAlign='right';ctx.textBaseline='bottom';
     ctx.fillText(PAGE_FORMATS[pageFormat].label+' — horizontal',sw-6/zoom,sh-4/zoom);
-    // margin guides (light)
+    // margin guides
     const mg=40;
     ctx.strokeStyle=isDark?'rgba(255,255,255,.05)':'rgba(0,0,0,.04)';ctx.lineWidth=1/zoom;
     ctx.setLineDash([4/zoom,4/zoom]);
@@ -794,14 +807,12 @@ function drawEl(e){
     if(isCirc||isDia){ctx.font=`11px 'DM Sans',sans-serif`;ctx.textBaseline='top';ctx.fillText(e.label,e.x,e.y+e.h/2+4);}
     else wrapTxt(ctx,e.label,e.x,e.y,e.w-14,14);
   }
-  if(isHov||isSel||true){ // always show ports when hovered
-    // only draw ports when this element is hovered or selected
-    if(isHov||isSel){
-      for(const p of ports(e)){
-        ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);
-        ctx.fillStyle=connectStart?'#D94040':'#4f8ef7';ctx.fill();
-        ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
-      }
+  // draw ports: always visible during active connection, otherwise only on hover/select
+  if(isHov||isSel||connectStart){
+    for(const p of ports(e)){
+      ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);
+      ctx.fillStyle=connectStart?'#f76f6f':'#4f8ef7';ctx.fill();
+      ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
     }
   }
   ctx.restore();
@@ -810,21 +821,25 @@ function drawEl(e){
 function wrapTxt(c2,text,x,y,maxW,lh){const ws=text.split(' ');let ln='',ls=[];for(const w of ws){const t=ln?ln+' '+w:w;if(c2.measureText(t).width>maxW&&ln){ls.push(ln);ln=w;}else ln=t;}ls.push(ln);const sy=y-(ls.length-1)*lh/2;ls.forEach((l,i)=>c2.fillText(l,x,sy+i*lh));}
 
 // ── ORTHOGONAL ROUTING ────────────────────────────────────────────
-// Returns array of {x,y} points forming the orthogonal path
+function portByDir(el,dir){
+  if(dir==='right')return{x:el.x+el.w/2,y:el.y,dir:'right'};
+  if(dir==='left') return{x:el.x-el.w/2,y:el.y,dir:'left'};
+  if(dir==='top')  return{x:el.x,y:el.y-el.h/2,dir:'top'};
+  return{x:el.x,y:el.y+el.h/2,dir:'bottom'};
+}
+
 function orthoRoute(from,to,conn){
-  // pick best exit/entry port pair
-  const fp=getBestPort(from,to);
-  const tp=getBestPort(to,from);
-  const x1=fp.x,y1=fp.y,x2=tp.x,y2=tp.y;
-  const d1=fp.dir,d2=tp.dir;
-  const GAP=24; // elbow gap from element edge
-
-  // offsets stored per-segment in conn.offsets = {mid: number}
   const off=(conn&&conn.offsets)||{};
+  const GAP=24;
 
-  // build basic orthogonal path based on port directions
-  let pts=buildOrtho(x1,y1,d1,x2,y2,d2,GAP,off);
-  return pts;
+  // Use saved port directions if available (set when user drags from specific port)
+  const d1 = conn.fromDir || getBestPort(from,to).dir;
+  const d2 = conn.toDir   || getBestPort(to,from).dir;
+
+  const fp=portByDir(from,d1);
+  const tp=portByDir(to,d2);
+
+  return buildOrtho(fp.x,fp.y,d1,tp.x,tp.y,d2,GAP,off);
 }
 
 function getBestPort(el,other){
@@ -836,11 +851,12 @@ function getBestPort(el,other){
   return portByDir(el,dir);
 }
 
-function portByDir(el,dir){
-  if(dir==='right')return{x:el.x+el.w/2,y:el.y,dir};
-  if(dir==='left') return{x:el.x-el.w/2,y:el.y,dir};
-  if(dir==='top')  return{x:el.x,y:el.y-el.h/2,dir};
-  /* bottom */     return{x:el.x,y:el.y+el.h/2,dir};
+// Given a canvas point, determine which port direction it's closest to on an element
+function nearestPortDir(el,wx,wy){
+  const ps=ports(el);
+  let best=null,bd=Infinity;
+  for(const p of ps){const d=Math.hypot(wx-p.x,wy-p.y);if(d<bd){bd=d;best=p;}}
+  return best?best.dir:'right';
 }
 
 function buildOrtho(x1,y1,d1,x2,y2,d2,gap,off){
@@ -984,10 +1000,16 @@ canvas.addEventListener('mousedown',e=>{
   const r=wrap.getBoundingClientRect();const cx=e.clientX-r.left,cy=e.clientY-r.top;const{x:wx,y:wy}=wp(cx,cy);
   const el=getEl(cx,cy);
   if(el){
-    // always check for port hit first (no need for hoveredEl guard)
+    // Check port hit first (small area around each port dot)
     const port=portAt(el,wx,wy);
-    if(port){connectStart={el,port};tempLine={x1:port.x,y1:port.y,x2:wx,y2:wy};return;}
-    selEl(el);dragging=el;dragOffset={x:wx-el.x,y:wy-el.y};return;
+    if(port){connectStart={el,port,startX:wx,startY:wy};tempLine={x1:port.x,y1:port.y,x2:wx,y2:wy};return;}
+    // Otherwise start as drag — will become connection if mouse leaves element bounds
+    selEl(el);
+    dragging=el;
+    dragOffset={x:wx-el.x,y:wy-el.y};
+    // Store potential connection start info
+    dragging._connCandidate={el,startX:wx,startY:wy};
+    return;
   }
   // pool resize
   for(const p of pools){
@@ -1035,8 +1057,25 @@ canvas.addEventListener('mousemove',e=>{
     draw();return;
   }
   if(dragging){
-    if(dragging.lanes){dragging.x=wx-dragOffset.x;dragging.y=wy-dragOffset.y;alignGuides=[];}
-    else{
+    if(dragging.lanes){
+      dragging.x=wx-dragOffset.x;dragging.y=wy-dragOffset.y;alignGuides=[];
+    } else {
+      // Check if mouse has left the element boundary → switch to connection mode
+      const cc=dragging._connCandidate;
+      if(cc && !hitEl(dragging,wx,wy)){
+        // Determine which port based on exit direction
+        const dx=wx-cc.startX, dy=wy-cc.startY;
+        let dir;
+        if(Math.abs(dx)>Math.abs(dy)){dir=dx>0?'right':'left';}
+        else{dir=dy>0?'bottom':'top';}
+        const port=portByDir(dragging,dir);
+        // cancel drag, start connection
+        dragging._connCandidate=null;
+        connectStart={el:dragging,port};
+        tempLine={x1:port.x,y1:port.y,x2:wx,y2:wy};
+        dragging=null;
+        draw();return;
+      }
       dragging.x=wx-dragOffset.x;dragging.y=wy-dragOffset.y;
       const{snapX,snapY}=computeAlignGuides(dragging);
       if(snapX!==null)dragging.x=snapX;
@@ -1051,16 +1090,31 @@ canvas.addEventListener('mousemove',e=>{
 
 canvas.addEventListener('mouseup',e=>{
   const r=wrap.getBoundingClientRect();const cx=e.clientX-r.left,cy=e.clientY-r.top;
+  const{x:wx,y:wy}=wp(cx,cy);
   if(connectStart){
     const t=getEl(cx,cy);
     if(t&&t.id!==connectStart.el.id&&!connections.find(c=>c.from===connectStart.el.id&&c.to===t.id)){
-      snap();connections.push({id:'conn_'+(nextId++),from:connectStart.el.id,to:t.id,label:'',offsets:{}});
+      snap();
+      // toDir: nearest port on target to where the mouse was released
+      const toDir=nearestPortDir(t,wx,wy);
+      connections.push({
+        id:'conn_'+(nextId++),
+        from:connectStart.el.id,
+        to:t.id,
+        label:'',
+        fromDir:connectStart.port.dir, // exact port the user dragged from
+        toDir,                          // nearest port at release point
+        offsets:{}
+      });
     }
     connectStart=null;tempLine=null;draw();return;
   }
   if(draggingConn){snap();draggingConn=null;canvas.style.cursor=getCursor(cx,cy);return;}
   if(resizing){resizing=null;draw();return;}
-  if(dragging){snap();alignGuides=[];}
+  if(dragging){
+    if(dragging._connCandidate)dragging._connCandidate=null;
+    snap();alignGuides=[];
+  }
   dragging=null;panStart=null;canvas.style.cursor=getCursor(cx,cy);
 });
 
@@ -1107,11 +1161,20 @@ function renderProps(){
 
   if(selType==='conn'){
     const c=selected;
+    const dirLabel={top:'↑ Cima',right:'→ Direita',bottom:'↓ Baixo',left:'← Esquerda'};
     body.innerHTML=`
       <span class="prop-type-badge" style="background:#F1EFE8;color:#444441;border:1px solid #88878033">Conexão</span>
       <label class="prop-label">Rótulo da seta</label>
       <input id="prop-label" class="prop-input" type="text" value="${esc(c.label||'')}" oninput="updConn('label',this.value)" placeholder="Ex: Sim, Não, Aprovado"/>
-      <p style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6">Arraste os segmentos horizontais ou verticais para ajustar o roteamento.</p>
+      <label class="prop-label">Saída (porta de origem)</label>
+      <select class="prop-input" onchange="updConn('fromDir',this.value)">
+        ${['top','right','bottom','left'].map(d=>`<option value="${d}"${c.fromDir===d?' selected':''}>${dirLabel[d]}</option>`).join('')}
+      </select>
+      <label class="prop-label">Entrada (porta de destino)</label>
+      <select class="prop-input" onchange="updConn('toDir',this.value)">
+        ${['top','right','bottom','left'].map(d=>`<option value="${d}"${c.toDir===d?' selected':''}>${dirLabel[d]}</option>`).join('')}
+      </select>
+      <p style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6">Arraste os segmentos para ajustar o roteamento.</p>
       <div class="prop-actions">
         <button class="btn" onclick="resetConnRoute()" style="font-size:11px">↺ Resetar rota</button>
         <button class="btn danger" onclick="deleteSelected()" style="font-size:11px">✕ Excluir conexão</button>
@@ -1173,7 +1236,14 @@ function renderLanes(p){
   });
 }
 
-function updConn(k,v){if(selected&&selType==='conn'){selected[k]=v;draw();}}
+function updConn(k,v){
+  if(selected&&selType==='conn'){
+    selected[k]=v;
+    // reset manual offsets when port direction is changed — route recalculates cleanly
+    if(k==='fromDir'||k==='toDir') selected.offsets={};
+    draw();
+  }
+}
 function resetConnRoute(){if(selected&&selType==='conn'){selected.offsets={};draw();}}
 function updPool(k,v){if(selected&&selType==='pool'){selected[k]=v;draw();}}
 function updEl(k,v){if(selected&&selType==='el'){selected[k]=v;draw();}}
