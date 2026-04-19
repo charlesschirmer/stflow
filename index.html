@@ -1223,28 +1223,77 @@ function newDiagram(){
 }
 
 // ── SAVE / OPEN (.stflow file) ─────────────────────────────────────
-function saveProject(){
-  const data=getData();
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=pname().replace(/\s+/g,'_')+'.stflow';
-  a.click();URL.revokeObjectURL(a.href);
+let currentFileHandle = null;
+
+async function saveProject() {
+  const content = JSON.stringify(getData(), null, 2);
+  const suggestedName = pname().replace(/\s+/g,'_') + '.stflow';
+
+  // Ja tem handle → salva direto no mesmo arquivo
+  if (currentFileHandle) {
+    try {
+      const writable = await currentFileHandle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      setStatus('Salvo ✓','ok');
+      return;
+    } catch(e) { currentFileHandle = null; }
+  }
+
+  // Chrome/Edge → seletor nativo de pasta
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName,
+        types:[{ description:'Projeto STFlow', accept:{'application/json':['.stflow']} }]
+      });
+      currentFileHandle = handle;
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      setStatus('Salvo ✓','ok');
+    } catch(e) {
+      if (e.name !== 'AbortError') { setStatus('Erro ao salvar','err'); console.error(e); }
+    }
+    return;
+  }
+
+  // Fallback Firefox/Safari → download
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content],{type:'application/json'}));
+  a.download = suggestedName;
+  a.click();
+  URL.revokeObjectURL(a.href);
   setStatus('Projeto salvo','ok');
 }
 
-function openProject(){
-  const input=document.createElement('input');
-  input.type='file';input.accept='.stflow,.json';
-  input.onchange=e=>{
-    const file=e.target.files[0];if(!file)return;
-    const reader=new FileReader();
-    reader.onload=ev=>{
-      try{
-        const d=JSON.parse(ev.target.result);
-        loadProjectData(d);
-        setStatus('Projeto aberto','ok');
-      }catch(err){alert('Arquivo inválido: '+err.message);}
+async function openProject() {
+  // Chrome/Edge → seletor nativo de arquivo
+  if (window.showOpenFilePicker) {
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        types:[{ description:'Projeto STFlow', accept:{'application/json':['.stflow','.json']} }],
+        multiple: false
+      });
+      currentFileHandle = handle;
+      const text = await (await handle.getFile()).text();
+      loadProjectData(JSON.parse(text));
+      setStatus('Projeto aberto','ok');
+    } catch(e) {
+      if (e.name !== 'AbortError') { setStatus('Erro ao abrir','err'); console.error(e); }
+    }
+    return;
+  }
+
+  // Fallback → input file classico
+  const input = document.createElement('input');
+  input.type='file'; input.accept='.stflow,.json';
+  input.onchange = e => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try { loadProjectData(JSON.parse(ev.target.result)); setStatus('Projeto aberto','ok'); }
+      catch(err) { alert('Arquivo inválido: '+err.message); }
     };
     reader.readAsText(file);
   };
