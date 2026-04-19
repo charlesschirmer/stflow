@@ -1223,34 +1223,32 @@ function newDiagram(){
 }
 
 // ── SAVE / OPEN (.stflow file) ─────────────────────────────────────
+// Guarda o handle do arquivo atual para sugerir mesma pasta/nome no próximo Salvar Como
 let currentFileHandle = null;
 
 async function saveProject() {
   const content = JSON.stringify(getData(), null, 2);
   const suggestedName = pname().replace(/\s+/g,'_') + '.stflow';
 
-  // Ja tem handle → salva direto no mesmo arquivo
-  if (currentFileHandle) {
-    try {
-      const writable = await currentFileHandle.createWritable();
-      await writable.write(content);
-      await writable.close();
-      setStatus('Salvo ✓','ok');
-      return;
-    } catch(e) { currentFileHandle = null; }
-  }
-
-  // Chrome/Edge → seletor nativo de pasta
+  // Chrome/Edge: sempre abre "Salvar como..." — com pasta e nome sugeridos do arquivo anterior
   if (window.showSaveFilePicker) {
     try {
-      const handle = await window.showSaveFilePicker({
+      const opts = {
         suggestedName,
         types:[{ description:'Projeto STFlow', accept:{'application/json':['.stflow']} }]
-      });
+      };
+      // Se já tem handle anterior, tenta abrir na mesma pasta (startIn)
+      if (currentFileHandle) {
+        try { opts.startIn = currentFileHandle; } catch(e) {}
+      }
+      const handle = await window.showSaveFilePicker(opts);
       currentFileHandle = handle;
       const writable = await handle.createWritable();
       await writable.write(content);
       await writable.close();
+      // Atualiza nome do processo com o nome do arquivo escolhido
+      const fname = handle.name.replace(/\.stflow$/i,'').replace(/_/g,' ');
+      document.getElementById('proc-name').value = fname;
       setStatus('Salvo ✓','ok');
     } catch(e) {
       if (e.name !== 'AbortError') { setStatus('Erro ao salvar','err'); console.error(e); }
@@ -1258,7 +1256,7 @@ async function saveProject() {
     return;
   }
 
-  // Fallback Firefox/Safari → download
+  // Fallback Firefox/Safari → download (sem seletor nativo)
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([content],{type:'application/json'}));
   a.download = suggestedName;
