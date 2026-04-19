@@ -258,10 +258,15 @@ canvas{position:absolute;top:0;left:0}
       </div>
       <div class="dd-sep"></div>
       <div class="dd-label">Arquivo</div>
-      <div class="dd-item" onclick="saveProject();closeMenus()">
+      <div class="dd-item" onclick="saveFile();closeMenus()">
         <svg viewBox="0 0 16 16" fill="none"><path d="M3 2h8l3 3v9H3V2z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><rect x="5" y="9" width="6" height="5" rx=".5" stroke="currentColor" stroke-width="1.1"/><path d="M5 2v4h5V2" stroke="currentColor" stroke-width="1.1"/></svg>
-        Salvar projeto
+        Salvar
         <span class="dd-kbd">Ctrl+S</span>
+      </div>
+      <div class="dd-item" onclick="saveProject();closeMenus()">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M3 2h8l3 3v9H3V2z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><rect x="5" y="9" width="6" height="5" rx=".5" stroke="currentColor" stroke-width="1.1"/><path d="M5 2v4h5V2" stroke="currentColor" stroke-width="1.1"/><path d="M11 6l2-2" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+        Salvar como...
+        <span class="dd-kbd">Ctrl+Shift+S</span>
       </div>
       <div class="dd-item" onclick="openProject();closeMenus()">
         <svg viewBox="0 0 16 16" fill="none"><path d="M2 5h5l2 2h5v7H2V5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
@@ -1223,8 +1228,30 @@ function newDiagram(){
 }
 
 // ── SAVE / OPEN (.stflow file) ─────────────────────────────────────
-// Guarda o handle do arquivo atual para sugerir mesma pasta/nome no próximo Salvar Como
+// currentFileHandle: lembra o arquivo atual para Salvar direto sem diálogo
 let currentFileHandle = null;
+
+// SALVAR — silencioso se já tem arquivo; "Salvar como..." na primeira vez
+async function saveFile() {
+  const content = JSON.stringify(getData(), null, 2);
+  const suggestedName = pname().replace(/\s+/g,'_') + '.stflow';
+
+  // Já tem handle → salva direto, sem abrir diálogo
+  if (currentFileHandle) {
+    try {
+      const writable = await currentFileHandle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      setStatus('Salvo ✓','ok');
+      return;
+    } catch(e) {
+      currentFileHandle = null; // permissão expirou → cai no Salvar Como
+    }
+  }
+
+  // Primeira vez → comporta igual ao Salvar Como
+  await saveProject();
+}
 
 async function saveProject() {
   const content = JSON.stringify(getData(), null, 2);
@@ -1320,7 +1347,7 @@ function loadProjectData(d){
 }
 
 // keep JSON export/import for gist compatibility
-function exportJSON(){saveProject();}
+function exportJSON(){ saveFile(); }
 function importJSON(){openProject();}
 function doImport(){}
 function handleFileImport(){}
@@ -1656,7 +1683,9 @@ function fitToScreen(){
 // extra keyboard shortcuts
 document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='n'){e.preventDefault();newDiagram();}
-  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveProject();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'&&!e.shiftKey){e.preventDefault();saveFile();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='S'&&e.shiftKey){e.preventDefault();saveProject();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'&&e.shiftKey){e.preventDefault();saveProject();}
   if((e.ctrlKey||e.metaKey)&&e.key==='o'){e.preventDefault();openProject();}
   if((e.ctrlKey||e.metaKey)&&e.key==='d'){e.preventDefault();driveSave();}
   if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key==='F'){e.preventDefault();fitToScreen();}
