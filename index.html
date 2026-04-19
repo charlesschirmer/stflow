@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>STFlow BPMS v1.2</title>
+<title>STFlow v2.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -164,6 +164,18 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .palette-item:active{cursor:grabbing;transform:scale(.96)}
 .pal-icon{width:30px;height:24px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .pal-label{font-size:12px;color:var(--text2);line-height:1.2}
+/* ── PALETTE GROUPS ── */
+.pal-group{border-bottom:1px solid var(--border)}
+.pal-group-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 10px 8px;cursor:pointer;user-select:none;
+  font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--text2);transition:color .12s;
+}
+.pal-group-header:hover{color:var(--text);background:var(--surface2)}
+.pal-chevron{width:10px;height:6px;color:var(--text3);transition:transform .2s;flex-shrink:0}
+.pal-group-body{overflow:hidden;transition:max-height .25s ease}
+.pal-group-body.collapsed{max-height:0!important}
 #canvas-wrap{flex:1;position:relative;overflow:hidden;background-color:var(--bg);background-image:radial-gradient(circle,var(--border) 1px,transparent 1px);background-size:24px 24px}
 canvas{position:absolute;top:0;left:0}
 #canvas-hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:11px;color:var(--text3);pointer-events:none;transition:opacity .5s;white-space:nowrap}
@@ -238,7 +250,7 @@ canvas{position:absolute;top:0;left:0}
 <div id="header">
   <div class="logo">
     <div class="logo-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="3" cy="8" r="2" fill="white"/><rect x="6" y="5" width="4" height="6" rx="1.5" fill="white"/><circle cx="13" cy="8" r="2" fill="white"/><line x1="5" y1="8" x2="6" y2="8" stroke="white" stroke-width="1.2"/><line x1="10" y1="8" x2="11" y2="8" stroke="white" stroke-width="1.2"/></svg></div>
-    <div class="logo-text"><div class="logo-name">STFlow</div><div class="logo-ver">BPMS v1.2</div></div>
+    <div class="logo-text"><div class="logo-name">STFlow</div><div class="logo-ver">v2.0</div></div>
   </div>
   <div class="header-div"></div>
 
@@ -388,28 +400,91 @@ canvas{position:absolute;top:0;left:0}
 
 <div id="main">
   <div id="sidebar">
-    <div class="palette-section">Containers</div>
-    <div class="palette-item" draggable="true" data-type="pool">
-      <div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><rect x="1" y="1" width="28" height="20" rx="2" fill="none" stroke="#4f8ef7" stroke-width="1.5"/><rect x="1" y="1" width="7" height="20" rx="2" fill="rgba(79,142,247,.15)" stroke="#4f8ef7" stroke-width="1.5"/><line x1="8" y1="11" x2="29" y2="11" stroke="#4f8ef7" stroke-width="1" stroke-dasharray="3 2" opacity=".5"/></svg></div>
-      <div class="pal-label">Pool / Container</div>
+
+    <!-- ── BPMN ── -->
+    <div class="pal-group">
+      <div class="pal-group-header" onclick="toggleGroup('grp-bpmn')">
+        <span>BPMN</span>
+        <svg class="pal-chevron" id="chv-grp-bpmn" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+      <div class="pal-group-body" id="grp-bpmn">
+        <div class="palette-section">Containers</div>
+        <div class="palette-item" draggable="true" data-type="pool">
+          <div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><rect x="1" y="1" width="28" height="20" rx="2" fill="none" stroke="#4f8ef7" stroke-width="1.5"/><rect x="1" y="1" width="7" height="20" rx="2" fill="rgba(79,142,247,.15)" stroke="#4f8ef7" stroke-width="1.5"/><line x1="8" y1="11" x2="29" y2="11" stroke="#4f8ef7" stroke-width="1" stroke-dasharray="3 2" opacity=".5"/></svg></div>
+          <div class="pal-label">Pool / Container</div>
+        </div>
+        <div class="palette-section">Eventos</div>
+        <div class="palette-item" draggable="true" data-type="startEvent"><div class="pal-icon"><svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" fill="#E6F5EE" stroke="#1D9E75" stroke-width="2"/></svg></div><div class="pal-label">Início</div></div>
+        <div class="palette-item" draggable="true" data-type="endEvent"><div class="pal-icon"><svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" fill="#FCEBEB" stroke="#D94040" stroke-width="2.5"/><circle cx="13" cy="13" r="6" fill="#D94040"/></svg></div><div class="pal-label">Fim</div></div>
+        <div class="palette-item" draggable="true" data-type="intermediateEvent"><div class="pal-icon"><svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" fill="#FEF3E2" stroke="#B86800" stroke-width="1.5"/><circle cx="13" cy="13" r="7" fill="none" stroke="#B86800" stroke-width="1.5"/></svg></div><div class="pal-label">Intermediário</div></div>
+        <div class="palette-section">Atividades</div>
+        <div class="palette-item" draggable="true" data-type="task"><div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><rect x="1" y="1" width="28" height="20" rx="3" fill="rgba(79,142,247,.15)" stroke="#4f8ef7" stroke-width="1.5"/></svg></div><div class="pal-label">Tarefa</div></div>
+        <div class="palette-item" draggable="true" data-type="userTask"><div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><rect x="1" y="1" width="28" height="20" rx="3" fill="rgba(79,142,247,.15)" stroke="#4f8ef7" stroke-width="1.5"/><circle cx="8" cy="9" r="3" fill="#4f8ef7" opacity=".5"/><path d="M3 19c0-3 2-5 5-5s5 2 5 5" stroke="#4f8ef7" stroke-width="1.2" fill="none" opacity=".5"/></svg></div><div class="pal-label">Tarefa Usuário</div></div>
+        <div class="palette-item" draggable="true" data-type="serviceTask"><div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><rect x="1" y="1" width="28" height="20" rx="3" fill="#F0EEF9" stroke="#6B52C8" stroke-width="1.5"/><text x="7" y="15" font-size="11" fill="#6B52C8" opacity=".7" font-family="sans-serif">⚙</text></svg></div><div class="pal-label">Tarefa Serviço</div></div>
+        <div class="palette-item" draggable="true" data-type="scriptTask"><div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><rect x="1" y="1" width="28" height="20" rx="3" fill="#F0EEF9" stroke="#6B52C8" stroke-width="1.5"/><path d="M9 7h12M9 11h8M9 15h10" stroke="#6B52C8" stroke-width="1.2" stroke-linecap="round" opacity=".7"/></svg></div><div class="pal-label">Tarefa Script</div></div>
+        <div class="palette-item" draggable="true" data-type="subProcess"><div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><rect x="1" y="1" width="28" height="20" rx="3" fill="#F1EFE8" stroke="#888780" stroke-width="1.5" stroke-dasharray="4 2"/><text x="13" y="15" font-size="10" fill="#888780" font-family="sans-serif" font-weight="bold">+</text></svg></div><div class="pal-label">Subprocesso</div></div>
+        <div class="palette-section">Gateways</div>
+        <div class="palette-item" draggable="true" data-type="gatewayXOR"><div class="pal-icon"><svg width="26" height="22" viewBox="0 0 26 22"><polygon points="13,1 25,11 13,21 1,11" fill="#FAECE7" stroke="#D85A30" stroke-width="1.5"/><text x="13" y="15" text-anchor="middle" font-size="11" fill="#D85A30" font-family="sans-serif" font-weight="bold">×</text></svg></div><div class="pal-label">Gateway XOR</div></div>
+        <div class="palette-item" draggable="true" data-type="gatewayAND"><div class="pal-icon"><svg width="26" height="22" viewBox="0 0 26 22"><polygon points="13,1 25,11 13,21 1,11" fill="#FAECE7" stroke="#D85A30" stroke-width="1.5"/><text x="13" y="15" text-anchor="middle" font-size="11" fill="#D85A30" font-family="sans-serif" font-weight="bold">+</text></svg></div><div class="pal-label">Gateway AND</div></div>
+        <div class="palette-item" draggable="true" data-type="gatewayOR"><div class="pal-icon"><svg width="26" height="22" viewBox="0 0 26 22"><polygon points="13,1 25,11 13,21 1,11" fill="#FAECE7" stroke="#D85A30" stroke-width="1.5"/><circle cx="13" cy="11" r="3.5" fill="none" stroke="#D85A30" stroke-width="1.5"/></svg></div><div class="pal-label">Gateway OR</div></div>
+        <div class="palette-section">Artefatos</div>
+        <div class="palette-item" draggable="true" data-type="dataObject"><div class="pal-icon"><svg width="22" height="26" viewBox="0 0 22 26"><path d="M2 2h12l4 5v17H2z" fill="#F1EFE8" stroke="#888780" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 2v5h4" stroke="#888780" stroke-width="1.5" fill="none"/></svg></div><div class="pal-label">Objeto de Dado</div></div>
+        <div class="palette-item" draggable="true" data-type="annotation"><div class="pal-icon"><svg width="28" height="22" viewBox="0 0 28 22"><path d="M10 2H26V20H10M10 2L2 2M10 20L2 20" fill="none" stroke="#888780" stroke-width="1.5"/></svg></div><div class="pal-label">Anotação</div></div>
+      </div>
     </div>
-    <div class="palette-section">Eventos</div>
-    <div class="palette-item" draggable="true" data-type="startEvent"><div class="pal-icon"><svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" fill="#E6F5EE" stroke="#1D9E75" stroke-width="2"/></svg></div><div class="pal-label">Início</div></div>
-    <div class="palette-item" draggable="true" data-type="endEvent"><div class="pal-icon"><svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" fill="#FCEBEB" stroke="#D94040" stroke-width="2.5"/><circle cx="13" cy="13" r="6" fill="#D94040"/></svg></div><div class="pal-label">Fim</div></div>
-    <div class="palette-item" draggable="true" data-type="intermediateEvent"><div class="pal-icon"><svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" fill="#FEF3E2" stroke="#B86800" stroke-width="1.5"/><circle cx="13" cy="13" r="7" fill="none" stroke="#B86800" stroke-width="1.5"/></svg></div><div class="pal-label">Intermediário</div></div>
-    <div class="palette-section">Atividades</div>
-    <div class="palette-item" draggable="true" data-type="task"><div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><rect x="1" y="1" width="28" height="20" rx="3" fill="rgba(79,142,247,.15)" stroke="#4f8ef7" stroke-width="1.5"/></svg></div><div class="pal-label">Tarefa</div></div>
-    <div class="palette-item" draggable="true" data-type="userTask"><div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><rect x="1" y="1" width="28" height="20" rx="3" fill="rgba(79,142,247,.15)" stroke="#4f8ef7" stroke-width="1.5"/><circle cx="8" cy="9" r="3" fill="#4f8ef7" opacity=".5"/><path d="M3 19c0-3 2-5 5-5s5 2 5 5" stroke="#4f8ef7" stroke-width="1.2" fill="none" opacity=".5"/></svg></div><div class="pal-label">Tarefa Usuário</div></div>
-    <div class="palette-item" draggable="true" data-type="serviceTask"><div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><rect x="1" y="1" width="28" height="20" rx="3" fill="#F0EEF9" stroke="#6B52C8" stroke-width="1.5"/><text x="7" y="15" font-size="11" fill="#6B52C8" opacity=".7" font-family="sans-serif">⚙</text></svg></div><div class="pal-label">Tarefa Serviço</div></div>
-    <div class="palette-item" draggable="true" data-type="scriptTask"><div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><rect x="1" y="1" width="28" height="20" rx="3" fill="#F0EEF9" stroke="#6B52C8" stroke-width="1.5"/><path d="M9 7h12M9 11h8M9 15h10" stroke="#6B52C8" stroke-width="1.2" stroke-linecap="round" opacity=".7"/></svg></div><div class="pal-label">Tarefa Script</div></div>
-    <div class="palette-item" draggable="true" data-type="subProcess"><div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><rect x="1" y="1" width="28" height="20" rx="3" fill="#F1EFE8" stroke="#888780" stroke-width="1.5" stroke-dasharray="4 2"/><text x="13" y="15" font-size="10" fill="#888780" font-family="sans-serif" font-weight="bold">+</text></svg></div><div class="pal-label">Subprocesso</div></div>
-    <div class="palette-section">Gateways</div>
-    <div class="palette-item" draggable="true" data-type="gatewayXOR"><div class="pal-icon"><svg width="26" height="22" viewBox="0 0 26 22"><polygon points="13,1 25,11 13,21 1,11" fill="#FAECE7" stroke="#D85A30" stroke-width="1.5"/><text x="13" y="15" text-anchor="middle" font-size="11" fill="#D85A30" font-family="sans-serif" font-weight="bold">×</text></svg></div><div class="pal-label">Gateway XOR</div></div>
-    <div class="palette-item" draggable="true" data-type="gatewayAND"><div class="pal-icon"><svg width="26" height="22" viewBox="0 0 26 22"><polygon points="13,1 25,11 13,21 1,11" fill="#FAECE7" stroke="#D85A30" stroke-width="1.5"/><text x="13" y="15" text-anchor="middle" font-size="11" fill="#D85A30" font-family="sans-serif" font-weight="bold">+</text></svg></div><div class="pal-label">Gateway AND</div></div>
-    <div class="palette-item" draggable="true" data-type="gatewayOR"><div class="pal-icon"><svg width="26" height="22" viewBox="0 0 26 22"><polygon points="13,1 25,11 13,21 1,11" fill="#FAECE7" stroke="#D85A30" stroke-width="1.5"/><circle cx="13" cy="11" r="3.5" fill="none" stroke="#D85A30" stroke-width="1.5"/></svg></div><div class="pal-label">Gateway OR</div></div>
-    <div class="palette-section">Artefatos</div>
-    <div class="palette-item" draggable="true" data-type="dataObject"><div class="pal-icon"><svg width="22" height="26" viewBox="0 0 22 26"><path d="M2 2h12l4 5v17H2z" fill="#F1EFE8" stroke="#888780" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 2v5h4" stroke="#888780" stroke-width="1.5" fill="none"/></svg></div><div class="pal-label">Objeto de Dado</div></div>
-    <div class="palette-item" draggable="true" data-type="annotation"><div class="pal-icon"><svg width="28" height="22" viewBox="0 0 28 22"><path d="M10 2H26V20H10M10 2L2 2M10 20L2 20" fill="none" stroke="#888780" stroke-width="1.5"/></svg></div><div class="pal-label">Anotação</div></div>
+
+    <!-- ── FLUXOGRAMA ── -->
+    <div class="pal-group">
+      <div class="pal-group-header" onclick="toggleGroup('grp-flow')">
+        <span>Fluxograma</span>
+        <svg class="pal-chevron" id="chv-grp-flow" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+      <div class="pal-group-body" id="grp-flow">
+        <div class="palette-item" draggable="true" data-type="fc_terminal">
+          <div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><rect x="1" y="4" width="28" height="14" rx="7" fill="#E6F5EE" stroke="#1D9E75" stroke-width="1.5"/></svg></div>
+          <div class="pal-label">Início / Fim</div>
+        </div>
+        <div class="palette-item" draggable="true" data-type="fc_process">
+          <div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><rect x="1" y="2" width="28" height="18" rx="2" fill="rgba(79,142,247,.15)" stroke="#4f8ef7" stroke-width="1.5"/></svg></div>
+          <div class="pal-label">Processo</div>
+        </div>
+        <div class="palette-item" draggable="true" data-type="fc_decision">
+          <div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><polygon points="15,1 29,11 15,21 1,11" fill="#FEF3E2" stroke="#B86800" stroke-width="1.5"/></svg></div>
+          <div class="pal-label">Decisão</div>
+        </div>
+        <div class="palette-item" draggable="true" data-type="fc_data">
+          <div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><polygon points="6,2 28,2 24,20 2,20" fill="#F0EEF9" stroke="#6B52C8" stroke-width="1.5"/></svg></div>
+          <div class="pal-label">Dados</div>
+        </div>
+        <div class="palette-item" draggable="true" data-type="fc_document">
+          <div class="pal-icon"><svg width="30" height="22" viewBox="0 0 30 22"><path d="M1 2h28v14c-7 0-7 6-14 6S8 16 1 16Z" fill="#FAECE7" stroke="#D85A30" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
+          <div class="pal-label">Documento</div>
+        </div>
+        <div class="palette-item" draggable="true" data-type="fc_connector">
+          <div class="pal-icon"><svg width="22" height="22" viewBox="0 0 22 22"><circle cx="11" cy="11" r="9" fill="#F1EFE8" stroke="#888780" stroke-width="1.5"/></svg></div>
+          <div class="pal-label">Conector</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ORGANOGRAMA ── -->
+    <div class="pal-group">
+      <div class="pal-group-header" onclick="toggleGroup('grp-org')">
+        <span>Organograma</span>
+        <svg class="pal-chevron" id="chv-grp-org" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+      <div class="pal-group-body" id="grp-org">
+        <div class="palette-item" draggable="true" data-type="org_lg">
+          <div class="pal-icon"><svg width="36" height="26" viewBox="0 0 36 26"><rect x="1" y="1" width="34" height="24" rx="3" fill="#EBF1FD" stroke="#4f8ef7" stroke-width="1.5"/><line x1="1" y1="13" x2="35" y2="13" stroke="#4f8ef7" stroke-width="1" opacity=".4"/><text x="18" y="9" text-anchor="middle" font-size="5" fill="#444860" font-family="sans-serif" font-weight="600">CARGO</text><text x="18" y="20" text-anchor="middle" font-size="5" fill="#7a7f9a" font-family="sans-serif">Nome</text></svg></div>
+          <div class="pal-label">Caixa Grande</div>
+        </div>
+        <div class="palette-item" draggable="true" data-type="org_sm">
+          <div class="pal-icon"><svg width="30" height="20" viewBox="0 0 30 20"><rect x="1" y="1" width="28" height="18" rx="3" fill="#E6F5EE" stroke="#1D9E75" stroke-width="1.5"/><line x1="1" y1="10" x2="29" y2="10" stroke="#1D9E75" stroke-width="1" opacity=".4"/><text x="15" y="7" text-anchor="middle" font-size="4.5" fill="#444860" font-family="sans-serif" font-weight="600">CARGO</text><text x="15" y="16" text-anchor="middle" font-size="4.5" fill="#7a7f9a" font-family="sans-serif">Nome</text></svg></div>
+          <div class="pal-label">Caixa Pequena</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <div id="canvas-wrap" ondragover="event.preventDefault()" ondrop="onCanvasDrop(event)">
@@ -602,10 +677,25 @@ const TM={
   gatewayOR:{lbl:'',w:50,h:50,col:'#D85A30',fill:'#FAECE7',txt:'#4A1B0C'},
   dataObject:{lbl:'Dado',w:44,h:54,col:'#888780',fill:'#F1EFE8',txt:'#2C2C2A'},
   annotation:{lbl:'Nota',w:110,h:48,col:'#888780',fill:'transparent',txt:'#444441'},
+  // Fluxograma
+  fc_terminal:{lbl:'Início/Fim',w:110,h:44,col:'#1D9E75',fill:'#E6F5EE',txt:'#085041'},
+  fc_process:{lbl:'Processo',w:110,h:54,col:'#4f8ef7',fill:'rgba(79,142,247,.15)',txt:'#042C53'},
+  fc_decision:{lbl:'Decisão',w:110,h:60,col:'#B86800',fill:'#FEF3E2',txt:'#412402'},
+  fc_data:{lbl:'Dados',w:110,h:54,col:'#6B52C8',fill:'#F0EEF9',txt:'#26215C'},
+  fc_document:{lbl:'Documento',w:110,h:60,col:'#D85A30',fill:'#FAECE7',txt:'#4A1B0C'},
+  fc_connector:{lbl:'',w:36,h:36,col:'#888780',fill:'#F1EFE8',txt:'#2C2C2A'},
+  // Organograma
+  org_lg:{lbl:'',w:150,h:70,col:'#4f8ef7',fill:'rgba(79,142,247,.12)',txt:'#042C53',role:'',bgColor:''},
+  org_sm:{lbl:'',w:120,h:54,col:'#1D9E75',fill:'rgba(39,168,112,.12)',txt:'#085041',role:'',bgColor:''},
 };
-const TL={startEvent:'Evento de Início',endEvent:'Evento de Fim',intermediateEvent:'Evento Intermediário',task:'Tarefa',userTask:'Tarefa de Usuário',serviceTask:'Tarefa de Serviço',scriptTask:'Tarefa Script',subProcess:'Subprocesso',gatewayXOR:'Gateway XOR',gatewayAND:'Gateway AND',gatewayOR:'Gateway OR',dataObject:'Objeto de Dado',annotation:'Anotação'};
+const TL={startEvent:'Evento de Início',endEvent:'Evento de Fim',intermediateEvent:'Evento Intermediário',task:'Tarefa',userTask:'Tarefa de Usuário',serviceTask:'Tarefa de Serviço',scriptTask:'Tarefa Script',subProcess:'Subprocesso',gatewayXOR:'Gateway XOR',gatewayAND:'Gateway AND',gatewayOR:'Gateway OR',dataObject:'Objeto de Dado',annotation:'Anotação',fc_terminal:'Terminal (Início/Fim)',fc_process:'Processo',fc_decision:'Decisão',fc_data:'Dados',fc_document:'Documento',fc_connector:'Conector',org_lg:'Caixa Grande (Org)',org_sm:'Caixa Pequena (Org)'};
 
-function mkEl(type,x,y){const m=TM[type]||TM.task;return{id:'el_'+(nextId++),type,x,y,w:m.w,h:m.h,label:m.lbl,role:'',description:''};}
+function mkEl(type,x,y){
+  const m=TM[type]||TM.task;
+  const e={id:'el_'+(nextId++),type,x,y,w:m.w,h:m.h,label:m.lbl,role:'',description:''};
+  if(type==='org_lg'||type==='org_sm'){e.cargo='Cargo';e.nome='Nome';e.bgColor='';}
+  return e;
+}
 function mkPool(x,y){return{id:'pool_'+(nextId++),label:'Departamento',x,y,w:620,lanes:[{id:'lane_'+(nextId++),label:'Lane 1',h:140},{id:'lane_'+(nextId++),label:'Lane 2',h:140}]};}
 
 // ── POOL GEOMETRY ─────────────────────────────────────────────────
@@ -617,8 +707,10 @@ function wp(cx,cy){return{x:(cx-pan.x)/zoom,y:(cy-pan.y)/zoom};}
 
 // ── HIT TESTS ─────────────────────────────────────────────────────
 function hitEl(e,wx,wy){
-  if(e.type==='startEvent'||e.type==='endEvent'||e.type==='intermediateEvent')return Math.hypot(wx-e.x,wy-e.y)<e.w/2+6;
-  if(e.type==='gatewayXOR'||e.type==='gatewayAND'||e.type==='gatewayOR')return Math.abs(wx-e.x)+Math.abs(wy-e.y)<e.w/2+6;
+  if(e.type==='startEvent'||e.type==='endEvent'||e.type==='intermediateEvent'||e.type==='fc_connector')
+    return Math.hypot(wx-e.x,wy-e.y)<e.w/2+6;
+  if(e.type==='gatewayXOR'||e.type==='gatewayAND'||e.type==='gatewayOR'||e.type==='fc_decision')
+    return Math.abs(wx-e.x)+Math.abs(wy-e.y)<e.w/2+6;
   return wx>=e.x-e.w/2-4&&wx<=e.x+e.w/2+4&&wy>=e.y-e.h/2-4&&wy<=e.y+e.h/2+4;
 }
 function getEl(cx,cy){const{x:wx,y:wy}=wp(cx,cy);for(let i=elements.length-1;i>=0;i--)if(hitEl(elements[i],wx,wy))return elements[i];return null;}
@@ -695,7 +787,8 @@ function draw(){
     const f=elements.find(e=>e.id===c.from),t=elements.find(e=>e.id===c.to);
     if(!f||!t)return;
     const pts=orthoRoute(f,t,c);
-    drawOrthoConn(pts,c.label,false,selected===c&&selType==='conn');
+    const isOrgConn=(f.type==='org_lg'||f.type==='org_sm')&&(t.type==='org_lg'||t.type==='org_sm');
+    drawOrthoConn(pts,c.label,false,selected===c&&selType==='conn',isOrgConn);
   });
   if(tempLine)drawTempLine(tempLine.x1,tempLine.y1,tempLine.x2,tempLine.y2);
   elements.forEach(e=>drawEl(e));
@@ -771,8 +864,8 @@ function drawEl(e){
   const sc=isSel?'#4f8ef7':m.col;
   ctx.save();
   if(isSel){ctx.shadowColor='#4f8ef7';ctx.shadowBlur=10/zoom;}
-  const isCirc=e.type==='startEvent'||e.type==='endEvent'||e.type==='intermediateEvent';
-  const isDia=e.type==='gatewayXOR'||e.type==='gatewayAND'||e.type==='gatewayOR';
+  const isCirc=e.type==='startEvent'||e.type==='endEvent'||e.type==='intermediateEvent'||e.type==='fc_connector';
+  const isDia=e.type==='gatewayXOR'||e.type==='gatewayAND'||e.type==='gatewayOR'||e.type==='fc_decision';
   if(isCirc){
     ctx.beginPath();ctx.arc(e.x,e.y,e.w/2,0,Math.PI*2);ctx.fillStyle=fill;ctx.fill();
     ctx.strokeStyle=sc;ctx.lineWidth=e.type==='endEvent'?3:2;ctx.stroke();
@@ -792,6 +885,62 @@ function drawEl(e){
     const x=e.x-e.w/2,y=e.y-e.h/2,w=e.w,h=e.h;
     ctx.beginPath();ctx.moveTo(x+14,y);ctx.lineTo(x,y);ctx.lineTo(x,y+h);ctx.lineTo(x+14,y+h);
     ctx.strokeStyle=sc;ctx.lineWidth=1.5;ctx.stroke();
+  }else if(e.type==='fc_terminal'){
+    // Rounded pill shape
+    ctx.beginPath();ctx.roundRect(e.x-e.w/2,e.y-e.h/2,e.w,e.h,e.h/2);
+    ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=sc;ctx.lineWidth=1.5;ctx.stroke();
+  }else if(e.type==='fc_decision'){
+    // Diamond
+    ctx.beginPath();ctx.moveTo(e.x,e.y-e.h/2);ctx.lineTo(e.x+e.w/2,e.y);ctx.lineTo(e.x,e.y+e.h/2);ctx.lineTo(e.x-e.w/2,e.y);ctx.closePath();
+    ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=sc;ctx.lineWidth=1.5;ctx.stroke();
+  }else if(e.type==='fc_data'){
+    // Parallelogram
+    const x=e.x-e.w/2,y=e.y-e.h/2,w=e.w,h=e.h,sk=16;
+    ctx.beginPath();ctx.moveTo(x+sk,y);ctx.lineTo(x+w,y);ctx.lineTo(x+w-sk,y+h);ctx.lineTo(x,y+h);ctx.closePath();
+    ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=sc;ctx.lineWidth=1.5;ctx.stroke();
+  }else if(e.type==='fc_document'){
+    // Rectangle with wavy bottom
+    const x=e.x-e.w/2,y=e.y-e.h/2,w=e.w,h=e.h;
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+w,y);ctx.lineTo(x+w,y+h-8);
+    ctx.bezierCurveTo(x+w*0.75,y+h-8,x+w*0.75,y+h+4,x+w*0.5,y+h);
+    ctx.bezierCurveTo(x+w*0.25,y+h-4,x+w*0.25,y+h-12,x,y+h-8);
+    ctx.closePath();ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=sc;ctx.lineWidth=1.5;ctx.stroke();
+  }else if(e.type==='fc_connector'){
+    ctx.beginPath();ctx.arc(e.x,e.y,e.w/2,0,Math.PI*2);
+    ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=sc;ctx.lineWidth=1.5;ctx.stroke();
+  }else if(e.type==='org_lg'||e.type==='org_sm'){
+    // Org box: header band (cargo) + body (nome), color editable
+    const x=e.x-e.w/2,y=e.y-e.h/2,w=e.w,h=e.h;
+    const headerH=Math.round(h*0.42);
+    const bgCol=e.bgColor||(isDark?'rgba(79,142,247,.18)':m.fill);
+    const hdrCol=e.bgColor?e.bgColor:m.col;
+    // outer box
+    ctx.beginPath();ctx.roundRect(x,y,w,h,5);
+    ctx.fillStyle=bgCol;ctx.fill();
+    ctx.strokeStyle=isSel?'#4f8ef7':hdrCol;ctx.lineWidth=isSel?2:1.5;ctx.stroke();
+    // header band
+    ctx.save();ctx.beginPath();ctx.roundRect(x,y,w,headerH,[5,5,0,0]);ctx.clip();
+    ctx.fillStyle=hdrCol+(isDark?'55':'33');ctx.fillRect(x,y,w,headerH);ctx.restore();
+    // divider line
+    ctx.beginPath();ctx.moveTo(x,y+headerH);ctx.lineTo(x+w,y+headerH);
+    ctx.strokeStyle=hdrCol+(isDark?'66':'44');ctx.lineWidth=1;ctx.stroke();
+    // cargo text
+    const cargoTxt=e.cargo||'Cargo';
+    ctx.fillStyle=isDark?'#cccccc':m.txt;
+    ctx.font=`600 ${e.type==='org_lg'?12:11}px 'DM Sans',sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(clipText(cargoTxt,w-12,ctx),e.x,y+headerH/2);
+    // nome text
+    const nomeTxt=e.nome||'Nome';
+    ctx.fillStyle=isDark?'#888888':'#7a7f9a';
+    ctx.font=`${e.type==='org_lg'?12:11}px 'DM Sans',sans-serif`;
+    ctx.fillText(clipText(nomeTxt,w-12,ctx),e.x,y+headerH+(h-headerH)/2);
+    ctx.shadowBlur=0;
+    if(isHov||isSel||connectStart){
+      for(const p of ports(e)){ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fillStyle=connectStart?'#f76f6f':'#4f8ef7';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();}
+    }
+    ctx.restore();
+    return; // skip default label/port drawing below
   }else{
     ctx.beginPath();ctx.roundRect(e.x-e.w/2,e.y-e.h/2,e.w,e.h,5);
     ctx.fillStyle=fill;ctx.fill();ctx.strokeStyle=sc;ctx.lineWidth=1.5;
@@ -893,7 +1042,7 @@ function buildOrtho(x1,y1,d1,x2,y2,d2,gap,off){
   return [{x:x1,y:y1},{x:x1,y:oy2},{x:x2,y:oy2}];
 }
 
-function drawOrthoConn(pts,lbl,tmp,isSel){
+function drawOrthoConn(pts,lbl,tmp,isSel,noArrow){
   if(pts.length<2)return;
   const strokeC=tmp?'#4f8ef7':isSel?'#4f8ef7':(isDark?'#888888':'#7a7f9a');
   ctx.save();
@@ -904,14 +1053,16 @@ function drawOrthoConn(pts,lbl,tmp,isSel){
   for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);
   ctx.stroke();ctx.setLineDash([]);
 
-  // arrowhead at last point
-  const last=pts[pts.length-1],prev=pts[pts.length-2];
-  const ang=Math.atan2(last.y-prev.y,last.x-prev.x);
-  ctx.beginPath();
-  ctx.moveTo(last.x,last.y);
-  ctx.lineTo(last.x-10*Math.cos(ang-.35),last.y-10*Math.sin(ang-.35));
-  ctx.lineTo(last.x-10*Math.cos(ang+.35),last.y-10*Math.sin(ang+.35));
-  ctx.closePath();ctx.fillStyle=strokeC;ctx.fill();
+  // arrowhead — skip for organograma connections
+  if(!noArrow){
+    const last=pts[pts.length-1],prev=pts[pts.length-2];
+    const ang=Math.atan2(last.y-prev.y,last.x-prev.x);
+    ctx.beginPath();
+    ctx.moveTo(last.x,last.y);
+    ctx.lineTo(last.x-10*Math.cos(ang-.35),last.y-10*Math.sin(ang-.35));
+    ctx.lineTo(last.x-10*Math.cos(ang+.35),last.y-10*Math.sin(ang+.35));
+    ctx.closePath();ctx.fillStyle=strokeC;ctx.fill();
+  }
 
   // selection handles on mid-segments (draggable)
   if(isSel){
@@ -974,7 +1125,7 @@ let draggingConn=null;
 // {conn, segIdx, isH, startMouse, startOff}
 
 // ── EVENTS ────────────────────────────────────────────────────────
-document.querySelectorAll('.palette-item').forEach(item=>item.addEventListener('dragstart',e=>{e.dataTransfer.setData('bpmn-type',item.dataset.type);e.dataTransfer.effectAllowed='copy';}));
+// palette drag handled by initGroups()
 
 function onCanvasDrop(e){
   e.preventDefault();const type=e.dataTransfer.getData('bpmn-type');if(!type)return;
@@ -1212,14 +1363,30 @@ function renderProps(){
 
   // element
   const e=selected,m=TM[e.type]||TM.task;
+  const isOrg=e.type==='org_lg'||e.type==='org_sm';
+  const isFc=e.type?.startsWith('fc_');
   body.innerHTML=`
     <span class="prop-type-badge" style="background:${m.fill==='transparent'?'#F1EFE8':m.fill};color:${m.txt};border:1px solid ${m.col}33">${TL[e.type]||e.type}</span>
-    <label class="prop-label">Rótulo</label>
-    <input id="prop-label" class="prop-input" type="text" value="${esc(e.label||'')}" oninput="updEl('label',this.value)" placeholder="Nome"/>
-    <label class="prop-label">Responsável / Papel</label>
-    <input class="prop-input" type="text" value="${esc(e.role||'')}" oninput="updEl('role',this.value)" placeholder="Ex: Financeiro"/>
+    ${isOrg?`
+      <label class="prop-label">Cargo</label>
+      <input class="prop-input" type="text" value="${esc(e.cargo||'')}" oninput="updEl('cargo',this.value)" placeholder="Ex: Diretor, Gerente"/>
+      <label class="prop-label">Nome</label>
+      <input id="prop-label" class="prop-input" type="text" value="${esc(e.nome||'')}" oninput="updEl('nome',this.value)" placeholder="Nome completo"/>
+      <label class="prop-label">Cor de fundo</label>
+      <div style="display:flex;gap:6px;align-items:center;margin-top:2px">
+        <input type="color" value="${e.bgColor||m.col}" oninput="updEl('bgColor',this.value)" style="width:32px;height:28px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:1px"/>
+        <button class="btn" onclick="updEl('bgColor','')" style="font-size:11px;padding:4px 8px">↺ Padrão</button>
+      </div>
+    `:`
+      <label class="prop-label">Rótulo</label>
+      <input id="prop-label" class="prop-input" type="text" value="${esc(e.label||'')}" oninput="updEl('label',this.value)" placeholder="Nome do elemento"/>
+    `}
+    ${!isOrg&&!isFc?`
+      <label class="prop-label">Responsável / Papel</label>
+      <input class="prop-input" type="text" value="${esc(e.role||'')}" oninput="updEl('role',this.value)" placeholder="Ex: Financeiro"/>
+    `:''}
     <label class="prop-label">Descrição</label>
-    <textarea class="prop-input" rows="4" oninput="updEl('description',this.value)" placeholder="Detalhes...">${esc(e.description||'')}</textarea>
+    <textarea class="prop-input" rows="3" oninput="updEl('description',this.value)" placeholder="Detalhes...">${esc(e.description||'')}</textarea>
     <div class="prop-actions">
       <button class="btn" onclick="ctxDuplicate()" style="font-size:11px">⧉ Duplicar</button>
       <button class="btn danger" onclick="deleteSelected()" style="font-size:11px">✕ Excluir</button>
@@ -1715,6 +1882,36 @@ async function driveOpen() {
   picker.setVisible(true);
 }
 
+// ── PALETTE GROUPS ────────────────────────────────────────────────
+const groupState={};
+function toggleGroup(id){
+  const body=document.getElementById(id);
+  const chv=document.getElementById('chv-'+id);
+  if(!body)return;
+  const isOpen=!body.classList.contains('collapsed');
+  if(isOpen){body.style.maxHeight='0';body.classList.add('collapsed');}
+  else{body.classList.remove('collapsed');body.style.maxHeight=body.scrollHeight+200+'px';}
+  groupState[id]=isOpen; // true=collapsed, false=open
+  if(chv)chv.style.transform=isOpen?'rotate(-90deg)':'';
+  localStorage.setItem('stflow_groups',JSON.stringify(groupState));
+}
+function initGroups(){
+  ['grp-bpmn','grp-flow','grp-org'].forEach(id=>{
+    const body=document.getElementById(id);if(!body)return;
+    body.style.maxHeight='0';
+    body.classList.add('collapsed');
+    groupState[id]=true;
+    const chv=document.getElementById('chv-'+id);
+    if(chv)chv.style.transform='rotate(-90deg)';
+  });
+  document.querySelectorAll('.palette-item').forEach(item=>{
+    item.addEventListener('dragstart',e=>{
+      e.dataTransfer.setData('bpmn-type',item.dataset.type);
+      e.dataTransfer.effectAllowed='copy';
+    });
+  });
+}
+
 function initDriveMenu() {
   updateDriveMenu();
 }
@@ -1937,6 +2134,7 @@ window.addEventListener('load',()=>{
   renderTabs();
   resize();
   initDriveMenu();
+  initGroups();
   setTimeout(()=>{const h=document.getElementById('canvas-hint');h.style.opacity='0';setTimeout(()=>h.style.display='none',600);},7000);
 });
 
