@@ -2178,12 +2178,13 @@ async function exportPDF(){
     // draw pools
     pools.forEach(p=>drawPoolOn(offCtx,p));
 
-    // draw connections
+    // draw connections — use same orthoRoute as canvas
     connections.forEach(c=>{
       const f=elements.find(e=>e.id===c.from),t=elements.find(e=>e.id===c.to);
       if(!f||!t)return;
-      const fp=nearPort(f,t.x,t.y),tp=nearPort(t,f.x,f.y);
-      drawArrowOn(offCtx,fp.x,fp.y,tp.x,tp.y,c.label);
+      const pts=orthoRoute(f,t,c);
+      const isOrgConn=(f.type==='org_lg'||f.type==='org_sm')&&(t.type==='org_lg'||t.type==='org_sm');
+      drawOrthoConnOn(offCtx,pts,c.label,isOrgConn);
     });
 
     // draw elements
@@ -2297,18 +2298,27 @@ function drawElOn(c2,e){
   c2.restore();
 }
 
-function drawArrowOn(c2,x1,y1,x2,y2,lbl){
-  // simple orthogonal for PDF: H then V
+function drawOrthoConnOn(c2,pts,lbl,noArrow){
+  if(!pts||pts.length<2)return;
   c2.save();
   c2.strokeStyle='#6B665E';c2.lineWidth=1.5;c2.lineJoin='round';c2.lineCap='round';
-  c2.beginPath();c2.moveTo(x1,y1);c2.lineTo(x2,y1);c2.lineTo(x2,y2);c2.stroke();
-  const ang=Math.atan2(y2-y1,0)||(y2>y1?Math.PI/2:-Math.PI/2);
-  const a2=y2!==y1?(y2>y1?Math.PI/2:-Math.PI/2):(x2>x1?0:Math.PI);
-  c2.beginPath();c2.moveTo(x2,y2);
-  c2.lineTo(x2-10*Math.cos(a2-.35),y2-10*Math.sin(a2-.35));
-  c2.lineTo(x2-10*Math.cos(a2+.35),y2-10*Math.sin(a2+.35));
-  c2.closePath();c2.fillStyle='#6B665E';c2.fill();
-  if(lbl){c2.fillStyle='#A09A90';c2.font='11px sans-serif';c2.textAlign='center';c2.textBaseline='middle';c2.fillText(lbl,(x1+x2)/2,y1-9);}
+  c2.beginPath();c2.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++)c2.lineTo(pts[i].x,pts[i].y);
+  c2.stroke();
+  if(!noArrow){
+    const last=pts[pts.length-1],prev=pts[pts.length-2];
+    const ang=Math.atan2(last.y-prev.y,last.x-prev.x);
+    c2.beginPath();c2.moveTo(last.x,last.y);
+    c2.lineTo(last.x-10*Math.cos(ang-.35),last.y-10*Math.sin(ang-.35));
+    c2.lineTo(last.x-10*Math.cos(ang+.35),last.y-10*Math.sin(ang+.35));
+    c2.closePath();c2.fillStyle='#6B665E';c2.fill();
+  }
+  if(lbl){
+    const mid=Math.floor(pts.length/2);
+    const mx=(pts[mid-1].x+pts[mid].x)/2,my=(pts[mid-1].y+pts[mid].y)/2;
+    c2.fillStyle='#A09A90';c2.font='11px sans-serif';c2.textAlign='center';c2.textBaseline='middle';
+    c2.fillText(lbl,mx,my-9);
+  }
   c2.restore();
 }
 
