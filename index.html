@@ -1445,7 +1445,21 @@ function ctxDelete(){closeCtxMenu();if(ctxTarget){if(ctxTargetType==='el')selEl(
 
 // ── ZOOM ──────────────────────────────────────────────────────────
 function zoomIn(){az(zoom*1.15);}function zoomOut(){az(zoom*.87);}
-function zoomReset(){zoom=1;pan={x:60,y:60};curPage().zoom=zoom;curPage().pan=pan;draw();}
+function zoomReset(){
+  zoom=1;
+  const fmt=PAGE_FORMATS[pageFormat];
+  if(fmt&&fmt.w){
+    // canvas.width já é a largura real da área de desenho (sem sidebar/props)
+    pan.x=Math.round((canvas.width-fmt.w)/2);
+    pan.y=Math.round((canvas.height-fmt.h)/2);
+    // garante margem mínima
+    if(pan.x<20)pan.x=20;
+    if(pan.y<20)pan.y=20;
+  }else{
+    pan.x=40;pan.y=40;
+  }
+  curPage().zoom=zoom;curPage().pan={x:pan.x,y:pan.y};draw();
+}
 function az(nz){const cx=canvas.width/2,cy=canvas.height/2;nz=Math.min(4,Math.max(.2,nz));pan.x=cx-(cx-pan.x)*(nz/zoom);pan.y=cy-(cy-pan.y)*(nz/zoom);zoom=nz;curPage().zoom=zoom;curPage().pan=pan;draw();}
 
 // ── FILE OPS ──────────────────────────────────────────────────────
@@ -2133,6 +2147,8 @@ window.addEventListener('load',()=>{
   syncFromPage();
   renderTabs();
   resize();
+  // Center paper after canvas is sized
+  zoomReset();
   initDriveMenu();
   initGroups();
   setTimeout(()=>{const h=document.getElementById('canvas-hint');h.style.opacity='0';setTimeout(()=>h.style.display='none',600);},7000);
