@@ -1165,7 +1165,7 @@ canvas.addEventListener('mousedown',e=>{
   // pool resize
   for(const p of pools){
     const edge=poolResizeEdge(p,cx,cy);
-    if(edge){snap();resizing={pool:p,edge,startX:wx,startY:wy,startW:p.w,startLastH:p.lanes[p.lanes.length-1].h};return;}
+    if(edge){snap();resizing={pool:p,edge,startX:wx,startY:wy,startW:p.w,startTotalH:poolH(p),startLaneHs:p.lanes.map(l=>l.h)};return;}
     const li=laneResizeEdge(p,cx,cy);
     if(li!==null){snap();resizing={pool:p,edge:'lane',laneIdx:li,startY:wy,startH:p.lanes[li].h,nextH:p.lanes[li+1].h};return;}
   }
@@ -1203,7 +1203,11 @@ canvas.addEventListener('mousemove',e=>{
   if(resizing){
     const rs=resizing,p=rs.pool;
     if(rs.edge==='right')p.w=Math.max(MIN_PW,rs.startW+(wx-rs.startX));
-    else if(rs.edge==='bottom'){const lastLane=p.lanes[p.lanes.length-1];lastLane.h=Math.max(MIN_LH,rs.startLastH+(wy-rs.startY));}
+    else if(rs.edge==='bottom'){
+      const newTotal=Math.max(MIN_LH*p.lanes.length, rs.startTotalH+(wy-rs.startY));
+      const ratio=newTotal/rs.startTotalH;
+      p.lanes.forEach((l,i)=>{ l.h=Math.max(MIN_LH, Math.round(rs.startLaneHs[i]*ratio)); });
+    }
     else if(rs.edge==='lane'){const d=wy-rs.startY;p.lanes[rs.laneIdx].h=Math.max(MIN_LH,rs.startH+d);p.lanes[rs.laneIdx+1].h=Math.max(MIN_LH,rs.nextH-d);}
     draw();return;
   }
@@ -1418,7 +1422,7 @@ function updLane(k,v){if(selected&&selType==='lane'){const p=pools.find(q=>q.id=
 function updLaneLabel(pid,i,v){const p=pools.find(q=>q.id===pid);if(p){p.lanes[i].label=v;draw();}}
 
 function getSelPool(){if(selType==='pool')return selected;if(selType==='lane')return pools.find(p=>p.id===selected.poolId);return null;}
-function addLane(){const p=getSelPool();if(!p)return;snap();p.lanes.push({id:'lane_'+(nextId++),label:'Lane '+(p.lanes.length+1),h:120});selPool(p);draw();}
+function addLane(){const p=getSelPool();if(!p)return;snap();const avgH=Math.round(p.lanes.reduce((s,l)=>s+l.h,0)/p.lanes.length);p.lanes.push({id:'lane_'+(nextId++),label:'Lane '+(p.lanes.length+1),h:avgH});selPool(p);draw();}
 function rmLastLane(){const p=getSelPool();if(!p||p.lanes.length<=1)return;snap();p.lanes.pop();selPool(p);draw();}
 function rmLane(i){const p=getSelPool();if(!p||p.lanes.length<=1)return;snap();p.lanes.splice(i,1);selPool(p);draw();}
 
